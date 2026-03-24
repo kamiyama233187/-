@@ -95,6 +95,8 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
   <button onclick="removeStaff()">スタッフ削除</button>
   <button onclick="insertHeaderRow()">日付行挿入</button>
   <button onclick="addShiftType()">シフト追加</button>
+  <button onclick="showFirstHalf()">前半</button>
+<button onclick="showSecondHalf()">後半</button>
   <button onclick="exportPDF()">PDF</button>
   <button onclick="openHelp()">ヘルプ</button>
 </div>
@@ -132,6 +134,15 @@ let data=JSON.parse(localStorage.getItem('data')||'{}');
 let headerRows=JSON.parse(localStorage.getItem('headerRows')||'[]');
 
 let days=16;
+// ★初期ロード時に日数を再計算
+{
+  const year = parseInt(startDate.slice(0,4));
+  const month = parseInt(startDate.slice(4,6));
+  days = new Date(year, month, 0).getDate();
+}
+
+let viewStart = 0;   // 何日目から表示するか（0 = 1日）
+let viewDays = 15;   // 何日分表示するか
 
 /* 保存 */
 function save(){
@@ -147,8 +158,10 @@ function getDate(base,i){
   return d;
 }
 
-function getDay(d){
-  return ["日","月","火","水","木","金","土"][d.getDay()];
+function getDays(){
+  const ths = document.querySelectorAll('#sheet table tr:first-child th');
+  if(ths.length === 0) return days; // 初回保険
+  return ths.length - 1; // 左の名前列を引く
 }
 
 /* ヘッダー */
@@ -157,21 +170,21 @@ function createHeader(){
 
   // 日付
   html += `<tr><th class="name">${monthLabel}</th>`;
-  for(let i=0;i<days;i++){
+  for(let i=0;i<viewDays;i++){
     html += `<th>${getDate(startDate,i).getDate()}</th>`;
   }
   html += '</tr>';
 
   // 曜日
   html += `<tr><th class="name"></th>`;
-  for(let i=0;i<days;i++){
+  for(let i=0;i<viewDays;i++){
     html += `<th>${getDay(getDate(startDate,i))}</th>`;
   }
   html += '</tr>';
 
   // ★青市 / 南店（分割）
   html += `<tr><th class="name"></th>`;
-  for(let i=0;i<days;i++){
+  for(let i=0;i<viewDays;i++){
     html += `
 <th>
   <div class="wrap">
@@ -215,7 +228,7 @@ function build(){
  ${name}
 </td>`;
 
-    for(let d=0; d<days; d++){
+    for(let i=0; i<viewDays; i++){   const d = i + viewStart;
 
       const keyA = name+'_'+d+'_A';
       const keyB = name+'_'+d+'_B';
@@ -425,7 +438,7 @@ function countShift(value, counter){
 /* カウント */
 function updateCounter(){
   let txt='';
-  for(let d=0;d<days;d++){
+  for(let i=0;i<viewDays;i++){   const d = i + viewStart;
     let A={},B={};
     rows.forEach(r=>{
   if(r.type !== 'staff') return;
@@ -449,13 +462,18 @@ function zoomOut(){zoom=Math.max(0.5,zoom-0.1);build();}
 
 function insertStaff(){
   const n=prompt('スタッフ名');
-  if(n){staff.push(n);save();build();}
+  if(n){
+    rows.push({type:'staff', name:n});
+    save();
+    build();
+  }
 }
 
 function removeStaff(){
   const n=prompt('削除名');
-  staff=staff.filter(s=>s!==n);
-  save();build();
+  rows = rows.filter(r => !(r.type === 'staff' && r.name === n));
+  save();
+  build();
 }
 
 function insertHeaderRow(){
@@ -475,7 +493,18 @@ function addShiftType(){
 
 function setStartDate(){
   const v=prompt('開始日',startDate);
-  if(v){startDate=v;localStorage.setItem('startDate',v);build();}
+  if(v){
+    startDate=v;
+
+    // ★ここ追加（月の日数を自動計算）
+    const year = parseInt(v.slice(0,4));
+    const month = parseInt(v.slice(4,6));
+
+    days = new Date(year, month, 0).getDate();
+
+    localStorage.setItem('startDate',v);
+    build();
+  }
 }
 
 function setMonthLabel(){
@@ -524,6 +553,23 @@ if ('serviceWorker' in navigator) {
 function openHelp(){
   window.location.href = "help.html";
 }
+
+function getDay(d){
+  return ["日","月","火","水","木","金","土"][d.getDay()];
+}
+
+function showFirstHalf(){
+  viewStart = 0;
+  viewDays = 15;
+  build();
+}
+
+function showSecondHalf(){
+  viewStart = 15;
+  viewDays = days - 15; // 月末まで
+  build();
+}
+
 build();
 
 </script>
