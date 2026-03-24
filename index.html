@@ -11,6 +11,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
+.sat{
+  background:#d0e7ff; /* 土曜（薄い青） */
+}
+
+.sun{
+  background:#ffd6d6; /* 日曜（薄い赤） */
+}
 /* 挿入ライン */
 .insert-line{
   position:absolute;
@@ -177,12 +184,20 @@ function createHeader(){
   }
   html += '</tr>';
 
-  // 曜日
-  html += `<tr><th class="name"></th>`;
-  for(let i=0;i<viewDays;i++){
-    html += `<th>${getDay(getDate(startDate,i))}</th>`;
-  }
-  html += '</tr>';
+ // 曜日
+html += `<tr><th class="name"></th>`;
+for(let i=0;i<viewDays;i++){
+
+  const d = getDate(startDate, i + viewStart);
+  const day = getDay(d);
+
+  let cls = "";
+  if(day === "土") cls = "sat";
+  if(day === "日") cls = "sun";
+
+  html += `<th class="${cls}">${day}</th>`;
+}
+html += '</tr>';
 
   // ★青市 / 南店（分割）
   html += `<tr><th class="name"></th>`;
