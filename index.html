@@ -130,8 +130,9 @@ if(rows.length === 0){
 }
 let data=JSON.parse(localStorage.getItem('data')||'{}');
 let headerRows=JSON.parse(localStorage.getItem('headerRows')||'[]');
-
-let days=16;
+function getDays(){
+  return document.querySelectorAll('table tr:first-child th').length - 1;
+}
 
 /* 保存 */
 function save(){
@@ -215,7 +216,7 @@ function build(){
  ${name}
 </td>`;
 
-    for(let d=0; d<days; d++){
+    for(let d=0; d<getDays(); d++){
 
       const keyA = name+'_'+d+'_A';
       const keyB = name+'_'+d+'_B';
@@ -425,7 +426,7 @@ function countShift(value, counter){
 /* カウント */
 function updateCounter(){
   let txt='';
-  for(let d=0;d<days;d++){
+  for(let d=0;d<getDays();d++){
     let A={},B={};
     rows.forEach(r=>{
   if(r.type !== 'staff') return;
