@@ -65,8 +65,8 @@ h1{
 </div>
 
 <div class="section">
-  <div class="title">スタッフ追加</div>
-  <div class="desc">新しいスタッフを追加</div>
+  <div class="title">スタッフ、シフト追加</div>
+  <div class="desc">新しいスタッフ、シフトを追加</div>
 </div>
 
 <div class="section">
@@ -129,10 +129,12 @@ h1{
 <button class="back" onclick="goBack()">戻る</button>
 
 <script>
-  window.addEventListener("load", () => {
-  if(!sessionStorage.getItem("helpReloaded")){
+ window.addEventListener("load", () => {
+  if (!sessionStorage.getItem("helpReloaded")) {
     sessionStorage.setItem("helpReloaded", "true");
     location.reload();
+  } else {
+    sessionStorage.removeItem("helpReloaded"); // ←これ重要
   }
 });
 function goBack(){
