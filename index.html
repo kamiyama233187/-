@@ -88,7 +88,7 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
 <div id="toolbar">
   <button onclick="zoomIn()">＋</button>
   <button onclick="zoomOut()">－</button>
-
+<button onclick="location.reload()">再読み込み</button>
   <button onclick="setStartDate()">開始日</button>
   <button onclick="setMonthLabel()">月表示</button>
   <button onclick="insertStaff()">スタッフ追加</button>
@@ -97,6 +97,7 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
   <button onclick="addShiftType()">シフト追加</button>
   <button onclick="showFirstHalf()">前半</button>
 <button onclick="showSecondHalf()">後半</button>
+<button onclick="clearAllShifts()">シフトリセット</button>
   <button onclick="exportPDF()">PDF</button>
   <button onclick="openHelp()">ヘルプ</button>
 </div>
@@ -567,6 +568,14 @@ function showFirstHalf(){
 function showSecondHalf(){
   viewStart = 15;
   viewDays = days - 15; // 月末まで
+  build();
+}
+
+function clearAllShifts(){
+  if(!confirm("全てのシフトを削除します。よろしいですか？")) return;
+
+  data = {};
+  save();
   build();
 }
 
