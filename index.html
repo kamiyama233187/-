@@ -148,17 +148,6 @@ let viewDays = 15;   // 何日分表示するか
 
 /* 保存 */
 function save(){
-  // ★履歴保存（ディープコピー）
-  historyStack.push({
-    rows: JSON.parse(JSON.stringify(rows)),
-    data: JSON.parse(JSON.stringify(data))
-  });
-
-  // 履歴が多すぎるの防止
-  if(historyStack.length > 50){
-    historyStack.shift();
-  }
-
   localStorage.setItem('rows',JSON.stringify(rows));
   localStorage.setItem('data',JSON.stringify(data));
   localStorage.setItem('shifts',JSON.stringify(shifts));
@@ -354,6 +343,7 @@ function endDrag(){
     dragIndex !== null &&
     rows[dragIndex] !== undefined
   ){
+    pushHistory();
     const moved = rows.splice(dragIndex,1)[0];
 
     if(moved){
@@ -429,6 +419,7 @@ function openSelector(key){
     const btn=document.createElement('button');
     btn.innerText=s;
     btn.onclick=()=>{
+      pushHistory();
       data[key]=s;
       save();
       box.remove();
@@ -477,6 +468,7 @@ function zoomOut(){zoom=Math.max(0.5,zoom-0.1);build();}
 function insertStaff(){
   const n=prompt('スタッフ名');
   if(n){
+    pushHistory();
     rows.push({type:'staff', name:n});
     save();
     build();
@@ -485,6 +477,7 @@ function insertStaff(){
 
 function removeStaff(){
   const n=prompt('削除名');
+  pushHistory();
   rows = rows.filter(r => !(r.type === 'staff' && r.name === n));
   save();
   build();
@@ -494,6 +487,7 @@ function insertHeaderRow(){
   const pos = parseInt(prompt('何行目の下に追加？')) - 1;
 
   if(!isNaN(pos)){
+    pushHistory();
     rows.splice(pos+1,0,{type:'header'});
     save();
     build();
@@ -586,7 +580,7 @@ function showSecondHalf(){
 
 function clearAllShifts(){
   if(!confirm("全てのシフトを削除します。よろしいですか？")) return;
-
+pushHistory();
   data = {};
   save();
   build();
@@ -606,6 +600,16 @@ function undo(){
   localStorage.setItem('data',JSON.stringify(data));
 
   build();
+}
+function pushHistory(){
+  historyStack.push({
+    rows: JSON.parse(JSON.stringify(rows)),
+    data: JSON.parse(JSON.stringify(data))
+  });
+
+  if(historyStack.length > 50){
+    historyStack.shift();
+  }
 }
 build();
 
