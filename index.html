@@ -158,21 +158,21 @@ function createHeader(){
 
   // 日付
   html += `<tr><th class="name">${monthLabel}</th>`;
-  for(let i=0;i<days;i++){
+  for(let i=0;i<31;i++){
     html += `<th>${getDate(startDate,i).getDate()}</th>`;
   }
   html += '</tr>';
 
   // 曜日
   html += `<tr><th class="name"></th>`;
-  for(let i=0;i<days;i++){
+  for(let i=0;i<31;i++){
     html += `<th>${getDay(getDate(startDate,i))}</th>`;
   }
   html += '</tr>';
 
   // ★青市 / 南店（分割）
   html += `<tr><th class="name"></th>`;
-  for(let i=0;i<days;i++){
+  for(let i=0;i<31;i++){
     html += `
 <th>
   <div class="wrap">
