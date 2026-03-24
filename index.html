@@ -98,6 +98,7 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
   <button onclick="showFirstHalf()">前半</button>
 <button onclick="showSecondHalf()">後半</button>
 <button onclick="clearAllShifts()">シフトリセット</button>
+<button onclick="undo()">一つ前に戻す</button>
   <button onclick="exportPDF()">PDF</button>
   <button onclick="openHelp()">ヘルプ</button>
 </div>
@@ -147,9 +148,20 @@ let viewDays = 15;   // 何日分表示するか
 
 /* 保存 */
 function save(){
+  // ★履歴保存（ディープコピー）
+  historyStack.push({
+    rows: JSON.parse(JSON.stringify(rows)),
+    data: JSON.parse(JSON.stringify(data))
+  });
+
+  // 履歴が多すぎるの防止
+  if(historyStack.length > 50){
+    historyStack.shift();
+  }
+
   localStorage.setItem('rows',JSON.stringify(rows));
   localStorage.setItem('data',JSON.stringify(data));
-  localStorage.setItem('shifts',JSON.stringify(shifts)); // ★追加
+  localStorage.setItem('shifts',JSON.stringify(shifts));
 }
 
 /* 日付 */
@@ -270,6 +282,7 @@ let dragEl=null;
 let dragIndex=null;
 let dropTargetIndex = null;
 let insertLine = null;
+let historyStack = [];
 
 function pressStart(e,index){
   dropTargetIndex = index;
@@ -578,7 +591,22 @@ function clearAllShifts(){
   save();
   build();
 }
+function undo(){
+  if(historyStack.length === 0){
+    alert("これ以上戻せません");
+    return;
+  }
 
+  const prev = historyStack.pop();
+
+  rows = prev.rows;
+  data = prev.data;
+
+  localStorage.setItem('rows',JSON.stringify(rows));
+  localStorage.setItem('data',JSON.stringify(data));
+
+  build();
+}
 build();
 
 </script>
