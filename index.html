@@ -117,6 +117,16 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
 <div id="counter"></div>
 
 <script>
+  const APP_VERSION = "1.0.0";
+
+// ↓ここ追加
+const savedVersion = localStorage.getItem("appVersion");
+
+if(savedVersion !== APP_VERSION){
+  localStorage.setItem("appVersion", APP_VERSION);
+  alert("アプリが更新されました。再読み込みします。");
+  location.reload();
+}
 const { jsPDF } = window.jspdf;
 
 let zoom=1;
