@@ -96,6 +96,7 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
   <button onclick="insertHeaderRow()">日付行挿入</button>
   <button onclick="addShiftType()">シフト追加</button>
   <button onclick="exportPDF()">PDF</button>
+  <button onclick="openHelp()">ヘルプ</button>
 </div>
 
 <div id="grid">
@@ -508,6 +509,10 @@ async function exportPDF(){
 }
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
+}
+
+function openHelp(){
+  window.location.href = "help.html";
 }
 build();
 
