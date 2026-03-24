@@ -412,6 +412,15 @@ function openSelector(key){
   document.body.appendChild(box);
 }
 
+function countShift(value, counter){
+  if(!value) return;
+
+  value.split('').forEach(ch=>{
+    if("ABCDE".includes(ch)){
+      counter[ch] = (counter[ch] || 0) + 1;
+    }
+  });
+}
 /* カウント */
 function updateCounter(){
   let txt='';
@@ -425,8 +434,8 @@ function updateCounter(){
   let vA = data[n+'_'+d+'_A'];
   let vB = data[n+'_'+d+'_B'];
 
-  if("ABCDE".includes(vA)) A[vA]=(A[vA]||0)+1;
-  if("ABCDE".includes(vB)) B[vB]=(B[vB]||0)+1;
+ countShift(vA, A);
+countShift(vB, B);
 });
     txt+=`${d+1}日 青市:${JSON.stringify(A)} 南店:${JSON.stringify(B)}<br>`;
   }
