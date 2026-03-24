@@ -122,6 +122,12 @@ h1{
 <button class="back" onclick="goBack()">戻る</button>
 
 <script>
+  window.addEventListener("load", () => {
+  if(!sessionStorage.getItem("helpReloaded")){
+    sessionStorage.setItem("helpReloaded", "true");
+    location.reload();
+  }
+});
 function goBack(){
   window.location.href = "index.html";
 }
