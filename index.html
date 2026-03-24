@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#eeeeee">
 <title>シフト管理 完全版</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -504,8 +506,11 @@ async function exportPDF(){
 
   pdf.save('shift.pdf');
 }
-
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
 build();
+
 </script>
 
 </body>
