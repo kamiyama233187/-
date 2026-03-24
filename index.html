@@ -130,9 +130,8 @@ if(rows.length === 0){
 }
 let data=JSON.parse(localStorage.getItem('data')||'{}');
 let headerRows=JSON.parse(localStorage.getItem('headerRows')||'[]');
-function getDays(){
-  return document.querySelectorAll('table tr:first-child th').length - 1;
-}
+
+let days=16;
 
 /* 保存 */
 function save(){
@@ -158,21 +157,21 @@ function createHeader(){
 
   // 日付
   html += `<tr><th class="name">${monthLabel}</th>`;
-  for(let i=0;i<31;i++){
+  for(let i=0;i<days;i++){
     html += `<th>${getDate(startDate,i).getDate()}</th>`;
   }
   html += '</tr>';
 
   // 曜日
   html += `<tr><th class="name"></th>`;
-  for(let i=0;i<31;i++){
+  for(let i=0;i<days;i++){
     html += `<th>${getDay(getDate(startDate,i))}</th>`;
   }
   html += '</tr>';
 
   // ★青市 / 南店（分割）
   html += `<tr><th class="name"></th>`;
-  for(let i=0;i<31;i++){
+  for(let i=0;i<days;i++){
     html += `
 <th>
   <div class="wrap">
@@ -216,7 +215,7 @@ function build(){
  ${name}
 </td>`;
 
-    for(let d=0; d<getDays(); d++){
+    for(let d=0; d<days; d++){
 
       const keyA = name+'_'+d+'_A';
       const keyB = name+'_'+d+'_B';
@@ -426,7 +425,7 @@ function countShift(value, counter){
 /* カウント */
 function updateCounter(){
   let txt='';
-  for(let d=0;d<getDays();d++){
+  for(let d=0;d<days;d++){
     let A={},B={};
     rows.forEach(r=>{
   if(r.type !== 'staff') return;
