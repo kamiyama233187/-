@@ -11,6 +11,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
+.row-number{
+  width:40px;
+  background:#f0f0f0;
+  font-size:12px;
+}
+
+/* ★PDF時は非表示 */
+@media print{
+  .row-number{
+    display:none;
+  }
+}
 .sat{
   background:#d0e7ff; /* 土曜（薄い青） */
 }
@@ -101,6 +113,7 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
   <button onclick="insertStaff()">スタッフ追加</button>
   <button onclick="removeStaff()">スタッフ削除</button>
   <button onclick="insertHeaderRow()">日付行挿入</button>
+  <button onclick="removeHeaderRow()">日付行削除</button>
   <button onclick="addShiftType()">シフト追加</button>
   <button onclick="showFirstHalf()">前半</button>
 <button onclick="showSecondHalf()">後半</button>
@@ -117,7 +130,7 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
 <div id="counter"></div>
 
 <script>
-  const APP_VERSION = "1.0.1";
+  const APP_VERSION = "1.0.2";
 
 const { jsPDF } = window.jspdf;
 
@@ -180,14 +193,14 @@ function createHeader(){
   let html='';
 
   // 日付
-  html += `<tr><th class="name">${monthLabel}</th>`;
+  html += `<tr><th class="row-number"></th><th class="name">${monthLabel}</th>`;
   for(let i=0;i<viewDays;i++){
-    html += `<th>${getDate(startDate,i).getDate()}</th>`;
-  }
+  html += `<th>${getDate(startDate, i + viewStart).getDate()}</th>`;
+}
   html += '</tr>';
 
  // 曜日
-html += `<tr><th class="name"></th>`;
+html += `<tr><th class="row-number"></th><th class="name"></th>`;
 for(let i=0;i<viewDays;i++){
 
   const d = getDate(startDate, i + viewStart);
@@ -202,7 +215,7 @@ for(let i=0;i<viewDays;i++){
 html += '</tr>';
 
   // ★青市 / 南店（分割）
-  html += `<tr><th class="name"></th>`;
+  html += `<tr><th class="row-number"></th><th class="name"></th>`;
   for(let i=0;i<viewDays;i++){
     html += `
 <th>
@@ -241,6 +254,9 @@ function build(){
     const name = row.name;
 
     html += `<tr data-index="${i}">
+
+<td class="row-number">${i+1}</td>
+
 <td class="name"
  ontouchstart="pressStart(event,${i})"
  ontouchend="pressEnd()">
@@ -541,6 +557,9 @@ async function exportPDF(){
 
   const el = document.getElementById('sheet');
 
+// ★追加
+el.classList.add("pdf-export");
+
   // 一時的にズーム解除
   const oldTransform = el.style.transform;
   el.style.transform = "scale(1)";
@@ -553,7 +572,8 @@ async function exportPDF(){
     windowWidth: el.scrollWidth,
     windowHeight: el.scrollHeight
   });
-
+// 元に戻す
+el.classList.remove("pdf-export");
   el.style.transform = oldTransform;
 
   // PNG → JPEGに変更（軽量化）
@@ -631,6 +651,24 @@ if(savedVersion !== APP_VERSION){
   localStorage.setItem("appVersion", APP_VERSION);
   alert("アプリが更新されました。再読み込みします。");
   location.reload();
+}
+
+function removeHeaderRow(){
+  const pos = parseInt(prompt('削除する日付行は何行目？')) - 1;
+
+  if(isNaN(pos)){
+    alert("数字を入力してください");
+    return;
+  }
+
+  if(rows[pos] && rows[pos].type === 'header'){
+    pushHistory(); // ←こっちに変更
+    rows.splice(pos, 1);
+    save();
+    build();
+  }else{
+    alert("その行は日付行ではありません");
+  }
 }
 
 build();
