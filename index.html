@@ -11,18 +11,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-.row-number{
-  width:40px;
-  background:#f0f0f0;
-  font-size:12px;
-}
-
-/* ★PDF時は非表示 */
-@media print{
-  .row-number{
-    display:none;
-  }
-}
 .sat{
   background:#d0e7ff; /* 土曜（薄い青） */
 }
@@ -98,7 +86,22 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
   font-size:12px;padding:8px;background:#fafafa;
 }
 
+.pdf-export .row-number{
+  display:none;
+}
 
+.row-number{
+  width:40px;
+  background:#f0f0f0;
+  font-size:12px;
+}
+
+/* ★PDF時は非表示 */
+@media print{
+  .row-number{
+    display:none;
+  }
+}
 </style>
 </head>
 
@@ -557,29 +560,28 @@ async function exportPDF(){
 
   const el = document.getElementById('sheet');
 
-// ★追加
-el.classList.add("pdf-export");
+  // ★ここ重要
+  el.classList.add("pdf-export");
 
-  // 一時的にズーム解除
   const oldTransform = el.style.transform;
   el.style.transform = "scale(1)";
 
   const canvas = await html2canvas(el, {
-    scale: 1, // ← 2 → 1.5に変更（軽量化）
+    scale: 1.5,
     useCORS: true,
     scrollX: 0,
     scrollY: 0,
     windowWidth: el.scrollWidth,
     windowHeight: el.scrollHeight
   });
-// 元に戻す
-el.classList.remove("pdf-export");
+
+  // ★戻す
+  el.classList.remove("pdf-export");
+
   el.style.transform = oldTransform;
 
-  // PNG → JPEGに変更（軽量化）
   const imgData = canvas.toDataURL('image/jpeg', 0.85);
 
-  // ★A3固定をやめて、canvasサイズに合わせる
   const pdf = new jsPDF({
     orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
     unit: 'px',
