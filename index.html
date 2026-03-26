@@ -541,12 +541,12 @@ async function exportPDF(){
 
   const el = document.getElementById('sheet');
 
-  // 一時的にズーム解除（超重要）
+  // 一時的にズーム解除
   const oldTransform = el.style.transform;
   el.style.transform = "scale(1)";
 
   const canvas = await html2canvas(el, {
-    scale: 2,
+    scale: 1, // ← 2 → 1.5に変更（軽量化）
     useCORS: true,
     scrollX: 0,
     scrollY: 0,
@@ -554,25 +554,21 @@ async function exportPDF(){
     windowHeight: el.scrollHeight
   });
 
-  // 元に戻す
   el.style.transform = oldTransform;
 
-  const imgData = canvas.toDataURL('image/png');
+  // PNG → JPEGに変更（軽量化）
+  const imgData = canvas.toDataURL('image/jpeg', 0.85);
 
-  const pdf = new jsPDF('landscape', 'mm', 'a3');
+  // ★A3固定をやめて、canvasサイズに合わせる
+  const pdf = new jsPDF({
+    orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+    unit: 'px',
+    format: [canvas.width, canvas.height]
+  });
 
-  const pageWidth = 420; // A3横
-  const pageHeight = 297;
-
-  const imgWidth = pageWidth;
-  const imgHeight = canvas.height * pageWidth / canvas.width;
-
-  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+  pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
 
   pdf.save('shift.pdf');
-}
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
 }
 
 function openHelp(){
