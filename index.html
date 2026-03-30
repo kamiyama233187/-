@@ -231,7 +231,7 @@ function blockScreen(message){
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>このアプリはPWA専用です</title>
+      <title>PWA専用</title>
       <style>
         body{
           margin:0;
@@ -247,36 +247,29 @@ function blockScreen(message){
         .box{
           padding:24px;
         }
-        h1{
-          font-size:20px;
-          margin-bottom:16px;
-        }
-        p{
-          font-size:14px;
-          line-height:1.6;
-          opacity:0.9;
-        }
         .btn{
           margin-top:20px;
-          padding:12px 16px;
+          padding:14px 18px;
           background:#fff;
           color:#000;
-          border-radius:8px;
+          border-radius:10px;
           font-weight:bold;
-          display:inline-block;
         }
       </style>
     </head>
     <body>
       <div class="box">
-        <h1>このアプリはPWA専用です</h1>
+        <h2>このアプリはPWA専用です</h2>
         <p>${message}</p>
-        <div class="btn">Chromeで開く → ホーム画面に追加</div>
+        <button class="btn" onclick="openChrome()">Chromeで開く</button>
       </div>
     </body>
   `;
 
+  // 👇 これ重要（inlineイベント対策）
+  window.openChrome = openChrome;
 }
+
 
 // =============================
 // メイン処理
@@ -338,6 +331,31 @@ window.addEventListener("load", () => {
     console.log("PWA起動OK");
 
   }, 300);
+  
+  function openChrome(){
+
+  const url = location.href;
+
+  // Android（Chrome起動）
+  if(/Android/i.test(navigator.userAgent)){
+    location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
+    return;
+  }
+
+  // iOS（Chromeアプリ or AppStore）
+  if(/iPhone|iPad|iPod/i.test(navigator.userAgent)){
+    location.href = "googlechrome://" + location.href.replace(/^https?:\/\//, '');
+    
+    setTimeout(()=>{
+      location.href = "https://apps.apple.com/app/google-chrome/id535886823";
+    }, 1000);
+
+    return;
+  }
+
+  // PCなど
+  location.href = "https://www.google.com/chrome/";
+}
 
 });
 /* 保存 */
