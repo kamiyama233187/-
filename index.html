@@ -235,60 +235,68 @@ function isPWA(){
 // =============================
 function blockScreen(message){
 
-  document.documentElement.innerHTML = `
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>PWA専用</title>
-      <style>
-        body{
-          margin:0;
-          font-family:sans-serif;
-          background:#111;
-          color:#fff;
-          display:flex;
-          justify-content:center;
-          align-items:center;
-          height:100vh;
-          text-align:center;
-        }
-        .box{
-          padding:24px;
-        }
-        .btn{
-          margin-top:20px;
-          padding:14px 18px;
-          background:#fff;
-          color:#000;
-          border-radius:10px;
-          font-weight:bold;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="box">
-        <h2>このアプリはPWA専用です</h2>
-        <p>${message}</p>
-        <button class="btn" onclick="openChrome()">Chromeで開く</button>
-        <button class="btn" onclick="installApp()">インストール</button>
-      </div>
-    </body>
+  if(document.getElementById("pwaBlock")) return;
+
+  const overlay = document.createElement("div");
+  overlay.id = "pwaBlock";
+
+  overlay.innerHTML = `
+    <div class="box">
+      <h2>このアプリはPWA専用です</h2>
+      <p>${message}</p>
+      <button class="btn" onclick="openChrome()">Chromeで開く</button>
+    </div>
   `;
 
-  // 👇 これ重要（inlineイベント対策）
-  window.openChrome = openChrome;
+  const style = document.createElement("style");
+  style.innerHTML = `
+    #pwaBlock{
+      position:fixed;
+      inset:0;
+      background:#111;
+      color:#fff;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      z-index:999999;
+      text-align:center;
+    }
+    #pwaBlock .box{
+      padding:24px;
+    }
+    #pwaBlock .btn{
+      margin-top:20px;
+      padding:14px 18px;
+      background:#fff;
+      color:#000;
+      border-radius:10px;
+      font-weight:bold;
+    }
+  `;
+
+  document.body.appendChild(style);
+  document.body.appendChild(overlay);
 }
 
 
 // =============================
 // メイン処理
 // =============================
+const FIRST_KEY = "firstVisitDone";
+
 window.addEventListener("load", () => {
+
+  // 初回は何もしない（最重要）
+  if(!localStorage.getItem(FIRST_KEY)){
+    localStorage.setItem(FIRST_KEY, "1");
+    console.log("初回アクセス：制御スキップ");
+    return;
+  }
 
   setTimeout(()=>{
 
     // =========================
-    // ① SNS内ブラウザ禁止（最優先）
+    // ① SNS内ブラウザ禁止
     // =========================
     if(isInAppBrowser()){
       blockScreen(
@@ -298,7 +306,7 @@ window.addEventListener("load", () => {
     }
 
     // =========================
-    // ② Chrome以外は強制誘導
+    // ② Chrome以外
     // =========================
     if(!isChrome()){
 
@@ -314,32 +322,27 @@ window.addEventListener("load", () => {
         location.href = "https://www.google.com/chrome/";
       }
 
-      // 遷移失敗時の保険
       setTimeout(()=>{
-        blockScreen(
-          "このアプリはGoogle Chrome専用です。\n\nChromeで開き直してください。"
-        );
-      }, 1500);
+        blockScreen("このアプリはGoogle Chrome専用です。");
+      },1500);
 
       return;
     }
 
     // =========================
-    // ③ PWAじゃない → 完全ブロック
+    // ③ PWAじゃない
     // =========================
-    if(!isPWA() && !canInstall){
-  blockScreen(
-    "このアプリはホーム画面に追加して使用してください。\n\n【手順】\n① 右上メニュー\n②「ホーム画面に追加」"
-  );
-  return;
-}
+    if(!isPWA()){
+      blockScreen(
+        "ホーム画面に追加して使用してください。\n\n①右上メニュー\n②ホーム画面に追加"
+      );
+      return;
+    }
 
-    // =========================
-    // ④ 正常（PWA起動）
-    // =========================
     console.log("PWA起動OK");
 
-  }, 300);
+  }, 30000); // ←ここ重要（3秒）
+
 });
 
 function installApp(){
