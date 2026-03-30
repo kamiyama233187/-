@@ -906,11 +906,17 @@ async function exportAndShare(){
 
   const el = document.getElementById('sheet');
 
+  // =========================
+  // PDF用スタイル適用
+  // =========================
   el.classList.add("pdf-export");
 
   const oldTransform = el.style.transform;
   el.style.transform = "scale(1)";
 
+  // =========================
+  // Canvas生成
+  // =========================
   const canvas = await html2canvas(el, {
     scale: 1.5,
     useCORS: true,
@@ -920,9 +926,13 @@ async function exportAndShare(){
     windowHeight: el.scrollHeight
   });
 
+  // 戻す
   el.classList.remove("pdf-export");
   el.style.transform = oldTransform;
 
+  // =========================
+  // PDF生成
+  // =========================
   const imgData = canvas.toDataURL('image/jpeg', 0.85);
 
   const pdf = new jsPDF({
@@ -933,26 +943,51 @@ async function exportAndShare(){
 
   pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
 
-  // ★ここがポイント
+  // =========================
+  // ファイル名生成
+  // =========================
+  const year = startDate.slice(0,4);
+  const month = monthLabel;
+  const half = viewStart === 0 ? "前半" : "後半";
+
+  const fileName = `${year}市が尾${month}${half}.pdf`;
+
+  // =========================
+  // Blob化
+  // =========================
   const blob = pdf.output('blob');
+  const file = new File([blob], fileName, { type: "application/pdf" });
 
-  const file = new File([blob], "shift.pdf", { type: "application/pdf" });
-
-  if(navigator.share){
+  // =========================
+  // 共有処理
+  // =========================
+  if(navigator.canShare && navigator.canShare({ files: [file] })){
     try{
       await navigator.share({
         files: [file],
-        title: "シフト表",
-        text: "シフト表を共有します"
+        title: fileName,
+        text: `${fileName} を共有します`
       });
     }catch(e){
       console.log("共有キャンセル");
     }
   }else{
-    alert("この端末は共有に対応していません");
+    // =========================
+    // フォールバック（保存）
+    // =========================
+    pdf.save(fileName);
+    alert("この端末では共有できないため、ダウンロードしました");
   }
 }
+function generateFileName(){
 
+  const year = startDate.slice(0,4);
+  const month = parseInt(startDate.slice(4,6)) + "月";
+
+  const half = viewStart === 0 ? "前半" : "後半";
+
+  return `${year}市が尾${month}${half}.pdf`;
+}
 build();
 
 </script>
