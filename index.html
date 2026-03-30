@@ -180,7 +180,8 @@ function isChrome(){
   const ua = getUA();
   return ua.includes("Chrome")
     && !ua.includes("Edg")
-    && !ua.includes("OPR");
+    && !ua.includes("OPR")
+    && !ua.includes("SamsungBrowser");
 }
 
 // 危険ブラウザ（ここ重要）
