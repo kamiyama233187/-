@@ -171,19 +171,36 @@ let days=16;
 
 let viewStart = 0;   // 何日目から表示するか（0 = 1日）
 let viewDays = 15;   // 何日分表示するか
+// ===== 判定 =====
+function getUA(){
+  return navigator.userAgent || "";
+}
 
-// ===== 判定系 =====
 function isChrome(){
+  const ua = getUA();
+  return ua.includes("Chrome")
+    && !ua.includes("Edg")
+    && !ua.includes("OPR");
+}
+
+// 危険ブラウザ（ここ重要）
+function isInAppBrowser(){
   const ua = navigator.userAgent;
-  return ua.includes("Chrome") && !ua.includes("Edg") && !ua.includes("OPR");
+
+  return ua.includes("Line") ||
+         ua.includes("FBAN") ||
+         ua.includes("FBAV") ||
+         ua.includes("Instagram") ||
+         ua.includes("Twitter") ||
+         ua.includes("SamsungBrowser"); // ★ここ追加
 }
 
 function isAndroid(){
-  return /Android/i.test(navigator.userAgent);
+  return /Android/i.test(getUA());
 }
 
 function isiOS(){
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  return /iPhone|iPad|iPod/i.test(getUA());
 }
 
 function isPWA(){
@@ -192,16 +209,31 @@ function isPWA(){
 }
 
 // ===== 一度だけ表示 =====
-const shown = localStorage.getItem("guideShown");
+const GUIDE_KEY = "appGuideShown";
 
-// ===== メイン制御 =====
+// ===== メイン =====
 window.addEventListener("load", () => {
 
-  if(shown) return;
+  if(localStorage.getItem(GUIDE_KEY)) return;
 
   setTimeout(()=>{
 
-    // ===== Chromeじゃない =====
+    // =========================
+    // ① LINEなど危険ブラウザ
+    // =========================
+    if(isInAppBrowser()){
+
+      alert(
+        "LINEやSNS内のブラウザでは正常に動作しません。\n\n右上のメニューから「ブラウザで開く」を選択してください。"
+      );
+
+      localStorage.setItem(GUIDE_KEY, "1");
+      return;
+    }
+
+    // =========================
+    // ② Chrome以外
+    // =========================
     if(!isChrome()){
 
       if(confirm(
@@ -211,10 +243,11 @@ window.addEventListener("load", () => {
         const url = location.href;
 
         if(isAndroid()){
-          // Chrome起動チャレンジ
+          // Chromeで開く試行
           location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
         }
         else if(isiOS()){
+          // iPhoneはChrome起動不可 → AppStore
           location.href = "https://apps.apple.com/app/google-chrome/id535886823";
         }
         else{
@@ -223,29 +256,30 @@ window.addEventListener("load", () => {
 
       }
 
-      localStorage.setItem("guideShown", "1");
+      localStorage.setItem(GUIDE_KEY, "1");
       return;
     }
 
-    // ===== ChromeだけどPWAじゃない =====
+    // =========================
+    // ③ ChromeだけどPWAじゃない
+    // =========================
     if(isChrome() && !isPWA()){
 
       if(confirm(
         "ホーム画面に追加するとアプリとして使えます。\n\n追加しますか？"
       )){
         alert(
-          "右上メニュー →『ホーム画面に追加』を選択してください"
+          "右上メニュー →「ホーム画面に追加」を選択してください"
         );
       }
 
-      localStorage.setItem("guideShown", "1");
+      localStorage.setItem(GUIDE_KEY, "1");
       return;
     }
 
   }, 500);
 
 });
-
 /* 保存 */
 function save(){
   localStorage.setItem('rows',JSON.stringify(rows));
