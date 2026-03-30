@@ -331,21 +331,36 @@ window.addEventListener("load", () => {
     console.log("PWA起動OK");
 
   }, 300);
-  
+});
   function openChrome(){
 
   const url = location.href;
+  const noScheme = url.replace(/^https?:\/\//,'');
 
-  // Android（Chrome起動）
+  // ===== Android =====
   if(/Android/i.test(navigator.userAgent)){
-    location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
+
+    // ① intentでChrome起動
+    location.href = `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;end`;
+
+    // ② ダメなら googlechrome://
+    setTimeout(()=>{
+      location.href = `googlechrome://${noScheme}`;
+    }, 800);
+
+    // ③ それもダメならPlayストア
+    setTimeout(()=>{
+      location.href = "https://play.google.com/store/apps/details?id=com.android.chrome";
+    }, 1600);
+
     return;
   }
 
-  // iOS（Chromeアプリ or AppStore）
+  // ===== iOS =====
   if(/iPhone|iPad|iPod/i.test(navigator.userAgent)){
-    location.href = "googlechrome://" + location.href.replace(/^https?:\/\//, '');
-    
+
+    location.href = "googlechrome://" + noScheme;
+
     setTimeout(()=>{
       location.href = "https://apps.apple.com/app/google-chrome/id535886823";
     }, 1000);
@@ -353,11 +368,10 @@ window.addEventListener("load", () => {
     return;
   }
 
-  // PCなど
+  // ===== PC =====
   location.href = "https://www.google.com/chrome/";
 }
 
-});
 /* 保存 */
 function save(){
   localStorage.setItem('rows',JSON.stringify(rows));
