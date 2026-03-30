@@ -123,6 +123,7 @@ th{width:140px;height:50px;font-size:18px;padding:0;}
 <button onclick="clearAllShifts()">シフトリセット</button>
 <button onclick="undo()">一つ前に戻す</button>
   <button onclick="exportPDF()">PDF</button>
+  <button onclick="exportAndShare()">LINEに共有</button>
   <button onclick="openHelp()">ヘルプ</button>
 </div>
 
@@ -170,6 +171,80 @@ let days=16;
 
 let viewStart = 0;   // 何日目から表示するか（0 = 1日）
 let viewDays = 15;   // 何日分表示するか
+
+// ===== 判定系 =====
+function isChrome(){
+  const ua = navigator.userAgent;
+  return ua.includes("Chrome") && !ua.includes("Edg") && !ua.includes("OPR");
+}
+
+function isAndroid(){
+  return /Android/i.test(navigator.userAgent);
+}
+
+function isiOS(){
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function isPWA(){
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+}
+
+// ===== 一度だけ表示 =====
+const shown = localStorage.getItem("guideShown");
+
+// ===== メイン制御 =====
+window.addEventListener("load", () => {
+
+  if(shown) return;
+
+  setTimeout(()=>{
+
+    // ===== Chromeじゃない =====
+    if(!isChrome()){
+
+      if(confirm(
+        "このアプリはGoogle Chromeでの使用を推奨しています。\n\nChromeで開きますか？"
+      )){
+
+        const url = location.href;
+
+        if(isAndroid()){
+          // Chrome起動チャレンジ
+          location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
+        }
+        else if(isiOS()){
+          location.href = "https://apps.apple.com/app/google-chrome/id535886823";
+        }
+        else{
+          location.href = "https://www.google.com/chrome/";
+        }
+
+      }
+
+      localStorage.setItem("guideShown", "1");
+      return;
+    }
+
+    // ===== ChromeだけどPWAじゃない =====
+    if(isChrome() && !isPWA()){
+
+      if(confirm(
+        "ホーム画面に追加するとアプリとして使えます。\n\n追加しますか？"
+      )){
+        alert(
+          "右上メニュー →『ホーム画面に追加』を選択してください"
+        );
+      }
+
+      localStorage.setItem("guideShown", "1");
+      return;
+    }
+
+  }, 500);
+
+});
 
 /* 保存 */
 function save(){
@@ -670,6 +745,57 @@ function removeHeaderRow(){
     build();
   }else{
     alert("その行は日付行ではありません");
+  }
+}
+
+async function exportAndShare(){
+
+  const el = document.getElementById('sheet');
+
+  el.classList.add("pdf-export");
+
+  const oldTransform = el.style.transform;
+  el.style.transform = "scale(1)";
+
+  const canvas = await html2canvas(el, {
+    scale: 1.5,
+    useCORS: true,
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: el.scrollWidth,
+    windowHeight: el.scrollHeight
+  });
+
+  el.classList.remove("pdf-export");
+  el.style.transform = oldTransform;
+
+  const imgData = canvas.toDataURL('image/jpeg', 0.85);
+
+  const pdf = new jsPDF({
+    orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+    unit: 'px',
+    format: [canvas.width, canvas.height]
+  });
+
+  pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+
+  // ★ここがポイント
+  const blob = pdf.output('blob');
+
+  const file = new File([blob], "shift.pdf", { type: "application/pdf" });
+
+  if(navigator.share){
+    try{
+      await navigator.share({
+        files: [file],
+        title: "シフト表",
+        text: "シフト表を共有します"
+      });
+    }catch(e){
+      console.log("共有キャンセル");
+    }
+  }else{
+    alert("この端末は共有に対応していません");
   }
 }
 
