@@ -145,6 +145,14 @@ let startDate=localStorage.getItem('startDate')||'20260101';
 let monthLabel=localStorage.getItem('monthLabel')||'1月';
 let shifts=JSON.parse(localStorage.getItem('shifts')||'["A","B","C","D","E","休"]');
 let rows = JSON.parse(localStorage.getItem('rows') || '[]');
+let canInstall = false;
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  canInstall = true;
+});
 
 // 初回だけ初期化
 if(rows.length === 0){
@@ -262,6 +270,7 @@ function blockScreen(message){
         <h2>このアプリはPWA専用です</h2>
         <p>${message}</p>
         <button class="btn" onclick="openChrome()">Chromeで開く</button>
+        <button class="btn" onclick="installApp()">インストール</button>
       </div>
     </body>
   `;
@@ -318,12 +327,12 @@ window.addEventListener("load", () => {
     // =========================
     // ③ PWAじゃない → 完全ブロック
     // =========================
-    if(!isPWA()){
-      blockScreen(
-        "このアプリはホーム画面に追加して使用してください。\n\n【手順】\n① 右上メニュー\n②「ホーム画面に追加」"
-      );
-      return;
-    }
+    if(!isPWA() && !canInstall){
+  blockScreen(
+    "このアプリはホーム画面に追加して使用してください。\n\n【手順】\n① 右上メニュー\n②「ホーム画面に追加」"
+  );
+  return;
+}
 
     // =========================
     // ④ 正常（PWA起動）
@@ -332,6 +341,22 @@ window.addEventListener("load", () => {
 
   }, 300);
 });
+
+function installApp(){
+  if(!deferredPrompt){
+    alert("このブラウザではインストールできません");
+    return;
+  }
+
+  deferredPrompt.prompt();
+
+  deferredPrompt.userChoice.then(choice=>{
+    if(choice.outcome === 'accepted'){
+      console.log("インストールOK");
+    }
+    deferredPrompt = null;
+  });
+}
   function openChrome(){
 
   const url = location.href;
