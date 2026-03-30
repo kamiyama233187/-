@@ -171,30 +171,41 @@ let days=16;
 
 let viewStart = 0;   // 何日目から表示するか（0 = 1日）
 let viewDays = 15;   // 何日分表示するか
-// ===== 判定 =====
+// =============================
+// UA取得
+// =============================
 function getUA(){
   return navigator.userAgent || "";
 }
 
+// =============================
+// Chrome判定
+// =============================
 function isChrome(){
   const ua = getUA();
   return ua.includes("Chrome")
     && !ua.includes("Edg")
-    && !ua.includes("OPR")
-    && !ua.includes("SamsungBrowser");
+    && !ua.includes("OPR");
+    // SamsungBrowserは「Chrome扱い」にする（ここ重要）
 }
 
-// 危険ブラウザ（ここ重要）
+// =============================
+// 危険ブラウザ（SNS内）
+// =============================
 function isInAppBrowser(){
-  const ua = navigator.userAgent;
+  const ua = getUA();
 
   return ua.includes("Line") ||
          ua.includes("FBAN") ||
          ua.includes("FBAV") ||
          ua.includes("Instagram") ||
-         ua.includes("Twitter"); // ★ここ追加
+         ua.includes("Twitter") ||
+         ua.includes("TikTok");
 }
 
+// =============================
+// OS判定
+// =============================
 function isAndroid(){
   return /Android/i.test(getUA());
 }
@@ -203,81 +214,130 @@ function isiOS(){
   return /iPhone|iPad|iPod/i.test(getUA());
 }
 
+// =============================
+// PWA判定
+// =============================
 function isPWA(){
   return window.matchMedia('(display-mode: standalone)').matches
     || window.navigator.standalone === true;
 }
 
-// ===== 一度だけ表示 =====
-const GUIDE_KEY = "appGuideShown";
+// =============================
+// ブロック画面
+// =============================
+function blockScreen(message){
 
-// ===== メイン =====
+  document.documentElement.innerHTML = `
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>このアプリはPWA専用です</title>
+      <style>
+        body{
+          margin:0;
+          font-family:sans-serif;
+          background:#111;
+          color:#fff;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          height:100vh;
+          text-align:center;
+        }
+        .box{
+          padding:24px;
+        }
+        h1{
+          font-size:20px;
+          margin-bottom:16px;
+        }
+        p{
+          font-size:14px;
+          line-height:1.6;
+          opacity:0.9;
+        }
+        .btn{
+          margin-top:20px;
+          padding:12px 16px;
+          background:#fff;
+          color:#000;
+          border-radius:8px;
+          font-weight:bold;
+          display:inline-block;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <h1>このアプリはPWA専用です</h1>
+        <p>${message}</p>
+        <div class="btn">Chromeで開く → ホーム画面に追加</div>
+      </div>
+    </body>
+  `;
+
+}
+
+// =============================
+// メイン処理
+// =============================
 window.addEventListener("load", () => {
-
-  if(localStorage.getItem(GUIDE_KEY)) return;
 
   setTimeout(()=>{
 
     // =========================
-    // ① LINEなど危険ブラウザ
+    // ① SNS内ブラウザ禁止（最優先）
     // =========================
     if(isInAppBrowser()){
-
-      alert(
-        "LINEやSNS内のブラウザでは正常に動作しません。\n\n右上のメニューから「ブラウザで開く」を選択してください。"
+      blockScreen(
+        "LINEやInstagramなどのアプリ内ブラウザでは使用できません。\n\n右上メニューから「ブラウザで開く」を選択してください。"
       );
-
-      localStorage.setItem(GUIDE_KEY, "1");
       return;
     }
 
     // =========================
-    // ② Chrome以外
+    // ② Chrome以外は強制誘導
     // =========================
     if(!isChrome()){
 
-      if(confirm(
-        "このアプリはGoogle Chromeでの使用を推奨しています。\n\nChromeで開きますか？"
-      )){
+      const url = location.href;
 
-        const url = location.href;
-
-        if(isAndroid()){
-          // Chromeで開く試行
-          location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
-        }
-        else if(isiOS()){
-          // iPhoneはChrome起動不可 → AppStore
-          location.href = "https://apps.apple.com/app/google-chrome/id535886823";
-        }
-        else{
-          location.href = "https://www.google.com/chrome/";
-        }
-
+      if(isAndroid()){
+        location.href = `intent://${url.replace(/^https?:\/\//,'')}#Intent;scheme=https;package=com.android.chrome;end`;
+      }
+      else if(isiOS()){
+        location.href = "https://apps.apple.com/app/google-chrome/id535886823";
+      }
+      else{
+        location.href = "https://www.google.com/chrome/";
       }
 
-      localStorage.setItem(GUIDE_KEY, "1");
-      return;
-    }
-
-    // =========================
-    // ③ ChromeだけどPWAじゃない
-    // =========================
-    if(isChrome() && !isPWA()){
-
-      if(confirm(
-        "ホーム画面に追加するとアプリとして使えます。\n\n追加しますか？"
-      )){
-        alert(
-          "右上メニュー →「ホーム画面に追加」を選択してください"
+      // 遷移失敗時の保険
+      setTimeout(()=>{
+        blockScreen(
+          "このアプリはGoogle Chrome専用です。\n\nChromeで開き直してください。"
         );
-      }
+      }, 1500);
 
-      localStorage.setItem(GUIDE_KEY, "1");
       return;
     }
 
-  }, 500);
+    // =========================
+    // ③ PWAじゃない → 完全ブロック
+    // =========================
+    if(!isPWA()){
+      blockScreen(
+        "このアプリはホーム画面に追加して使用してください。\n\n【手順】\n① 右上メニュー\n②「ホーム画面に追加」"
+      );
+      return;
+    }
+
+    // =========================
+    // ④ 正常（PWA起動）
+    // =========================
+    console.log("PWA起動OK");
+
+  }, 300);
 
 });
 /* 保存 */
